@@ -1,0 +1,293 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Open DayZ Folders",
+            "type": "shell",
+            "windows": {
+                "command": "explorer ${input:folder}",
+            },
+            "presentation": {
+                "reveal": "silent",
+                "focus": false,
+                "clear": true,
+                "close": true
+            },
+            "icon": {
+                "id": "root-folder",
+                "color": "terminal.ansiYellow"
+            },
+        },
+        {
+            "label": "Binarize",
+            "type": "shell",
+            "command": "${config:DAYZ_TOOLS_FOLDER}\\Bin\\AddonBuilder\\AddonBuilder.exe",
+            "args": [
+                "${workspaceFolder}",
+                "${config:DAYZ_FOLDER}\\!Workshop\\@${workspaceFolderBasename}\\Addons",
+                "-clear",
+                "-sign=${config:SIGN_PATH}",
+                "-include=${input:foldersBinarizeType}",
+                "-binarize=${config:DAYZ_TOOLS_FOLDER}\\Bin\\Binarize\\binarize.exe"
+            ],
+            "presentation": {
+                "reveal": "silent",
+                "focus": false,
+                "clear": true,
+                "close": true
+            },
+            "icon": {
+                "id": "package",
+                "color": "terminal.ansiRed"
+              }
+        },
+        {
+            "label": "Create symbolic link for mod",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "mklink",
+                "/d",
+                "${config:DAYZ_FOLDER}\\${workspaceFolderBasename}",
+                "${workspaceFolder}"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "focus": false,
+                "clear": true,
+            },
+            "icon": {
+                    "id": "file-symlink-directory",
+                    "color": "terminal.ansiCyan"
+                },
+        },
+        {
+            "label": "Launch Diag Client",
+            "type": "shell",
+            "command": "${config:DAYZ_FOLDER}\\DayZDiag_x64.exe",
+            "args": [
+                "-doLogs",
+                "-filePatching",
+                "-newErrorsAreWarnings=1",
+                "-scriptDebug=true",
+                "-mod='${config:DAYZ_DEFAULT_MODS};${config:DAYZ_FOLDER}\\!Workshop\\@${workspaceFolderBasename}'"
+            ],
+            "presentation": {
+                "reveal": "silent",
+                "focus": false,
+                "clear": true,
+            },
+            "icon": {
+                    "id": "debug-alt",
+                    "color": "terminal.ansiGreen"
+                },
+        },
+        {
+            "label": "Kill Dayz Diag (Client and Server)",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                "& {try { Stop-Process -Name 'DayZDiag_x64' -Force -ErrorAction Stop } catch {}}"
+            ],
+            "presentation": {
+                "reveal": "never",
+                "focus": false
+            },
+            "icon": {
+                "id": "close",
+                "color": "terminal.ansiRed"
+            }
+        },
+        {
+            "label": "Restart Client",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Kill Dayz Diag (Client and Server)",
+                "Launch Diag Client"
+            ],
+            "problemMatcher": [],
+            "icon": {
+                "id": "debug-restart",
+                "color": "terminal.ansiGreen"
+              },
+            "presentation": {
+                "reveal": "silent",
+                "focus": false,
+                "clear": true,
+                "close": true
+            }
+        },
+        {
+            "label": "Clear Logs",
+            "type": "shell",
+            "windows": {
+                "command": "cmd",
+                "args": [
+                    "/c",
+                    "del",
+                    "${input:foldersLogs}\\*.log",
+                    "${input:foldersLogs}\\*.rpt",
+                    "${input:foldersLogs}\\*.mdmp"
+                ]
+            },
+            "presentation": {
+                "reveal": "silent",
+                "focus": false,
+                "clear": true,
+                "close": true
+            },
+            "icon": {
+                "id": "trash",
+                "color": "terminal.ansiRed"
+              },
+        },
+        {
+            "label": "Show Last Log Real-time",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                "$latestLogFile = Get-ChildItem '${input:foldersLogs}' -Filter script*.log | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if ($latestLogFile) { Get-Content $latestLogFile.FullName -Wait } else { Write-Host 'No script*.log files found.' }"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "focus": true
+            },
+            "icon": {
+                "id": "debug-console",
+                "color": "terminal.ansiBlue"
+              }
+        },
+        {
+            "label": "Launch Diag Server",
+            "type": "shell",
+            "command": "${config:DAYZ_FOLDER}\\DayZDiag_x64.exe",
+            "args": [
+                "-server",
+                "-filePatching",
+                "-newErrorsAreWarnings=1",
+                "-config=${config:CFG_PATH}",
+                "-limitFPS=100",
+                "-scriptDebug=true",
+                "-mod='${config:DAYZ_DEFAULT_MODS};${config:DAYZ_FOLDER}\\!Workshop\\@${workspaceFolderBasename}'",
+                "-mission=${config:MISSION_PATH}",
+                "-profiles=${env:LOCALAPPDATA}\\DayZ Server"
+            ],
+            "presentation": {
+                "reveal": "silent",
+                "focus": false,
+                "clear": true,
+            },
+            "icon": {
+                    "id": "server",
+                    "color": "terminal.ansiGreen"
+                },
+        },
+        {
+            "label": "Launch Client/Server and Connect",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Kill Dayz Diag (Client and Server)",
+                "Launch Diag Server",
+                "Launch Diag Client and Connect"
+            ],
+            "problemMatcher": [],
+            "icon": {
+                "id": "debug-start",
+                "color": "terminal.ansiGreen"
+              },
+            "presentation": {
+                "reveal": "silent",
+                "focus": false,
+                "clear": true,
+                "close": true
+            }
+        },
+        {
+            "label": "Launch Diag Client and Connect",
+            "type": "shell",
+            "command": "${config:DAYZ_FOLDER}\\DayZDiag_x64.exe",
+            "args": [
+                "-doLogs",
+                "-filePatching",
+                "-newErrorsAreWarnings=1",
+                "-connect=localhost:2302",
+                "-scriptDebug=true",
+                "-mod='${config:DAYZ_DEFAULT_MODS};${config:DAYZ_FOLDER}\\!Workshop\\@${workspaceFolderBasename}'"
+            ],
+            "presentation": {
+                "reveal": "silent",
+                "focus": false,
+                "clear": true,
+            },
+            "icon": {
+                    "id": "game",
+                    "color": "terminal.ansiBlue"
+                },
+        }
+    ],
+    "inputs": [
+        {
+          "type": "pickString",
+          "id": "folder",
+          "description": "Folder path",
+          "options": [
+            { 
+                "value": "${config:DAYZ_FOLDER}\\!Workshop",
+                "label": "📁 Workshop Folder",
+            },
+            { 
+                "value": "${config:DAYZ_FOLDER}",
+                "label": "📁 DayZ Folder",
+            },         
+            { 
+                "value": "${config:DAYZ_TOOLS_FOLDER}\\bin\\Workbench",
+                "label": "📁 Workbench Folder",
+            },
+            { 
+                "value": "${config:CFG_PATH}",
+                "label": "⚙️ Server CFG",
+            }
+          ],
+          
+        },
+        {
+          "type": "pickString",
+          "id": "foldersBinarizeType",
+          "description": "Select type of binarizing",
+          "options": [
+            { 
+                "value": "${env:APPDATA}\\Code\\User\\include_sample.txt", 
+                "label": "🖥️ Sample",
+            },
+            { 
+                "value": "${env:APPDATA}\\Code\\User\\include.txt", 
+                "label": "🖥️ Full",
+            }
+          ],
+        },
+        {
+          "type": "pickString",
+          "id": "foldersLogs",
+          "description": "Select type of logs",
+          "options": [
+            { 
+                "value": "${env:LOCALAPPDATA}\\DayZ", 
+                "label": "🖥️ Client",
+            },
+            { 
+                "value": "${env:LOCALAPPDATA}\\DayZ Server", 
+                "label": "🖥️ Server",
+            }
+          ],
+        }
+      ],
+}
